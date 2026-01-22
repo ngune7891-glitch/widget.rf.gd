@@ -6,425 +6,467 @@
 
     if (!clientId) return console.error("Qgent: Client ID missing!");
 
-    // 2. Load Google Fonts
+    // 2. Load Google Fonts (Light weights for premium feel)
     const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600&display=swap';
     fontLink.rel = 'stylesheet';
     document.head.appendChild(fontLink);
 
-    // 3. Inject Premium CSS
+    // 3. Inject Ultra-Premium CSS
     const style = document.createElement('style');
     style.innerHTML = `
         :root {
-            --qg-primary: #0066ff;
+            --qg-primary: #3b82f6; 
+            --qg-accent: #60a5fa;
+            --qg-bg-glass: rgba(15, 23, 42, 0.65);
+            --qg-border-glass: rgba(255, 255, 255, 0.08);
+            --qg-text-main: #f8fafc;
+            --qg-text-sub: #94a3b8;
             --qg-font: 'Outfit', sans-serif;
-            --qg-shadow: 0 12px 40px rgba(0,0,0,0.12);
+            --qg-easing: cubic-bezier(0.16, 1, 0.3, 1); /* GSAP-like power2.out */
         }
 
         #qgent-container {
             font-family: var(--qg-font);
             position: fixed;
-            bottom: 24px;
-            right: 24px;
+            bottom: 30px;
+            right: 30px;
             z-index: 2147483647;
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            pointer-events: none; /* Allow clicking through container area */
+            pointer-events: none;
         }
 
-        #qgent-container > * {
-            pointer-events: auto; /* Re-enable clicks on children */
-        }
+        #qgent-container * { box-sizing: border-box; }
+        #qgent-container > * { pointer-events: auto; }
 
-        /* --- Toggle Button --- */
+        /* --- Toggle Button (Glowing Orb) --- */
         .qgent-button {
-            width: 64px;
-            height: 64px;
-            background: var(--qg-primary);
+            width: 60px;
+            height: 60px;
+            background: rgba(59, 130, 246, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 50%;
-            border: none;
             cursor: pointer;
-            box-shadow: 0 8px 24px rgba(0, 102, 255, 0.25);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), inset 0 0 10px rgba(59, 130, 246, 0.2);
+            transition: all 0.5s var(--qg-easing);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             position: relative;
-            overflow: hidden;
+            z-index: 20;
         }
 
-        .qgent-button:hover {
-            transform: scale(1.05) translateY(-2px);
-            box-shadow: 0 12px 32px rgba(0, 102, 255, 0.35);
+        .qgent-button::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+            opacity: 0;
+            filter: blur(10px);
+            transition: 0.5s;
+            z-index: -1;
         }
 
-        .qgent-button:active {
-            transform: scale(0.95);
-        }
+        .qgent-button:hover { transform: scale(1.1); box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
+        .qgent-button:hover::before { opacity: 0.5; }
+        .qgent-button:active { transform: scale(0.95); }
 
-        /* --- Chat Window --- */
+        /* --- Main Window (Dark Glass) --- */
         .qgent-window {
             position: absolute;
-            bottom: 84px;
+            bottom: 90px;
             right: 0;
-            width: 380px;
-            height: 600px;
-            max-height: calc(100vh - 120px);
-            background: #ffffff;
-            border-radius: 24px;
-            box-shadow: var(--qg-shadow);
-            border: 1px solid rgba(0,0,0,0.06);
-            display: flex;
+            width: 360px;
+            height: 520px;
+            background: linear-gradient(160deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 32px;
+            border: 1px solid var(--qg-border-glass);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            display: none;
             flex-direction: column;
             overflow: hidden;
             transform-origin: bottom right;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             opacity: 0;
-            transform: scale(0.9) translateY(20px);
-            pointer-events: none;
-            visibility: hidden;
+            transform: scale(0.8) translateY(20px);
+            transition: all 0.6s var(--qg-easing);
         }
 
         .qgent-window.open {
+            display: flex; /* Changed from just visible to flex to allow display toggling */
             opacity: 1;
             transform: scale(1) translateY(0);
-            pointer-events: auto;
-            visibility: visible;
         }
 
-        /* --- Header --- */
+        /* --- Header (Hidden in Welcome Mode) --- */
         .qgent-header {
-            padding: 24px;
-            background: linear-gradient(135deg, var(--qg-primary), #2563eb);
-            color: white;
+            padding: 20px 24px;
             display: flex;
             align-items: center;
-            gap: 16px;
-            position: relative;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.2);
         }
 
-        .qgent-avatar {
-            width: 44px;
-            height: 44px;
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(4px);
-            border-radius: 12px;
+        .qgent-header-title { font-size: 14px; font-weight: 500; color: white; letter-spacing: 0.5px; }
+
+        /* --- Welcome View (The "Hero" State) --- */
+        .qgent-welcome {
+            flex: 1;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            font-weight: 600;
+            padding: 30px;
+            text-align: center;
+            transition: 0.4s;
         }
 
-        .qgent-info h3 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.2; }
-        .qgent-info p { margin: 2px 0 0; font-size: 12px; opacity: 0.8; font-weight: 400; display: flex; align-items: center; gap: 4px; }
-        .qgent-status-dot { width: 6px; height: 6px; background: #4ade80; border-radius: 50%; display: inline-block; }
-
-        /* --- Close Button --- */
-        .qgent-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: none;
-            border: none;
-            color: rgba(255,255,255,0.6);
-            cursor: pointer;
-            padding: 4px;
+        .qgent-orb {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            transition: 0.2s;
+            background: royalblue;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(59, 130, 246, 1), rgba(15, 23, 42, 1));
+            box-shadow: 0 0 60px rgba(59, 130, 246, 0.5), inset 0 0 20px rgba(59, 130, 246, 0.5);
+            margin-bottom: 24px;
+            animation: orbFloat 6s ease-in-out infinite;
         }
-        .qgent-close:hover { background: rgba(255,255,255,0.1); color: white; }
 
-        /* --- Messages Area --- */
+        @keyframes orbFloat {
+            0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 0 60px rgba(59, 130, 246, 0.5); }
+            50% { transform: translateY(-10px) scale(1.05); box-shadow: 0 0 80px rgba(59, 130, 246, 0.7); }
+        }
+
+        .qgent-welcome h2 {
+            font-size: 24px;
+            font-weight: 300;
+            color: white;
+            margin: 0 0 8px;
+            opacity: 0;
+            animation: fadeInUp 0.8s 0.2s forwards var(--qg-easing);
+        }
+
+        .qgent-welcome h3 {
+            font-size: 24px;
+            font-weight: 500;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            opacity: 0;
+            animation: fadeInUp 0.8s 0.3s forwards var(--qg-easing);
+        }
+
+        /* --- Chat View (History) --- */
+        .qgent-chat-area {
+            flex: 1;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            overflow: hidden;
+        }
+
         .qgent-messages {
             flex: 1;
-            padding: 24px;
             overflow-y: auto;
-            background: #f8fafc;
+            padding: 24px;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            scroll-behavior: smooth;
         }
-
-        .qgent-messages::-webkit-scrollbar { width: 5px; }
-        .qgent-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
 
         .qgent-msg {
             max-width: 85%;
             padding: 12px 18px;
             font-size: 14px;
-            line-height: 1.5;
-            position: relative;
-            animation: slideIn 0.3s ease-out forwards;
-            opacity: 0;
-            transform: translateY(10px);
+            font-weight: 300;
+            line-height: 1.6;
+            animation: msgPop 0.4s var(--qg-easing) forwards;
         }
 
-        @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
-
         .qgent-msg.user {
-            background: var(--qg-primary);
-            color: white;
             align-self: flex-end;
+            background: #3b82f6;
+            color: white;
             border-radius: 20px 20px 4px 20px;
-            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.15);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
         }
 
         .qgent-msg.bot {
-            background: white;
-            color: #1e293b;
             align-self: flex-start;
+            background: rgba(255,255,255,0.08);
+            color: #e2e8f0;
             border-radius: 20px 20px 20px 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            border: 1px solid rgba(0,0,0,0.04);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .qgent-img {
-            max-width: 100%;
-            border-radius: 12px;
-            margin-top: 8px;
-            border: 1px solid rgba(0,0,0,0.1);
+        @keyframes msgPop {
+            from { opacity: 0; transform: translateY(15px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* --- Input Area --- */
-        .qgent-input-area {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid rgba(0,0,0,0.05);
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Unified Input Area --- */
+        .qgent-input-container {
+            padding: 24px;
+            background: rgba(0,0,0,0.2);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .qgent-input-box {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 8px;
             display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .qgent-input-wrapper {
-            flex: 1;
-            position: relative;
-            background: #f1f5f9;
-            border-radius: 24px;
+            flex-direction: column;
             transition: 0.3s;
-            border: 1px solid transparent;
         }
 
-        .qgent-input-wrapper:focus-within {
-            background: white;
-            border-color: var(--qg-primary);
-            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        .qgent-input-box:focus-within {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
 
         .qgent-input {
             width: 100%;
-            border: none;
             background: transparent;
-            padding: 14px 18px;
+            border: none;
+            padding: 12px 16px;
+            color: white;
             font-family: var(--qg-font);
             font-size: 14px;
+            font-weight: 300;
             outline: none;
-            color: #0f172a;
+        }
+        .qgent-input::placeholder { color: rgba(255,255,255,0.3); }
+
+        .qgent-tools {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 8px;
+            margin-top: 4px;
         }
 
-        .qgent-send-btn {
-            background: var(--qg-primary);
+        .qgent-tool-group { display: flex; gap: 8px; }
+
+        .qgent-tool-btn {
+            background: rgba(255,255,255,0.05);
             border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            color: white;
+            border-radius: 12px;
+            padding: 8px 12px;
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: center;
-            transition: 0.3s;
-            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.2);
+            gap: 6px;
+            transition: 0.2s;
         }
-
-        .qgent-send-btn:hover { transform: scale(1.05); }
-        .qgent-send-btn:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        /* --- Footer --- */
-        .qgent-footer {
-            text-align: center;
-            padding: 8px;
-            font-size: 10px;
-            color: #94a3b8;
-            background: #f8fafc;
-            border-top: 1px solid rgba(0,0,0,0.03);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 500;
-        }
+        .qgent-tool-btn:hover { background: rgba(255,255,255,0.1); color: white; }
         
+        .qgent-send-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 8px 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .qgent-send-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4); }
+        .qgent-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
         /* Mobile */
         @media (max-width: 480px) {
-            .qgent-window { width: 100vw; height: 100vh; max-height: none; bottom: 0; right: 0; border-radius: 0; }
-            #qgent-container { z-index: 2147483647; bottom: 0; right: 0; }
+            .qgent-window { width: 100vw; height: 100vh; bottom: 0; right: 0; border-radius: 0; }
+            #qgent-container { bottom: 20px; right: 20px; }
         }
     `;
     document.head.appendChild(style);
 
-    // 4. Create UI Structure
+    // 4. Icons
+    const ICONS = {
+        chat: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`,
+        close: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`,
+        attach: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>`,
+        mic: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`,
+        arrowUp: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`
+    };
+
+    // 5. Structure
     const container = document.createElement('div');
     container.id = 'qgent-container';
-
-    // Toggle Icon (Message/Close)
-    const chatIcon = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
-    const closeIcon = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-
     container.innerHTML = `
         <div class="qgent-window" id="qg-window">
-            <div class="qgent-header" id="qg-header">
-                <div class="qgent-avatar" id="qg-avatar">AI</div>
-                <div class="qgent-info">
-                    <h3 id="qg-bot-name">Support Agent</h3>
-                    <p><span class="qgent-status-dot"></span> Online</p>
-                </div>
-                <button class="qgent-close" id="qg-close-btn">${closeIcon}</button>
+            
+            <div class="qgent-header" id="qg-header" style="display:none;">
+                <div class="qgent-header-title">Qgent Assistant</div>
+                <div style="width:24px;"></div> <!-- Spacer -->
             </div>
-            
-            <div class="qgent-messages" id="qg-msgs"></div>
-            
-            <div class="qgent-input-area">
-                <div class="qgent-input-wrapper">
-                    <input type="text" class="qgent-input" id="qg-input" placeholder="Type your message...">
-                </div>
-                <button class="qgent-send-btn" id="qg-send" disabled>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                </button>
+
+            <!-- Welcome State -->
+            <div class="qgent-welcome" id="qg-welcome">
+                <div class="qgent-orb"></div>
+                <h2>Hi there,</h2>
+                <h3>what's on your mind?</h3>
             </div>
-            
-            <div class="qgent-footer">Powered by Questra</div>
+
+            <!-- Chat State -->
+            <div class="qgent-chat-area" id="qg-chat-area">
+                <div class="qgent-messages" id="qg-msgs"></div>
+            </div>
+
+            <!-- Input (Floating) -->
+            <div class="qgent-input-container">
+                <div class="qgent-input-box">
+                    <input type="text" class="qgent-input" id="qg-input" placeholder="Ask me anything...">
+                    <div class="qgent-tools">
+                        <div class="qgent-tool-group">
+                            <button class="qgent-tool-btn">${ICONS.attach} Attach</button>
+                            <button class="qgent-tool-btn">${ICONS.mic} Voice</button>
+                        </div>
+                        <button class="qgent-send-btn" id="qg-send" disabled>${ICONS.arrowUp} Send</button>
+                    </div>
+                </div>
+                <div style="text-align:center; margin-top:12px; font-size:10px; color:rgba(255,255,255,0.2); letter-spacing:1px; text-transform:uppercase;">Powered by Questra</div>
+            </div>
         </div>
 
         <button class="qgent-button" id="qg-btn">
-            ${chatIcon}
+            ${ICONS.chat}
         </button>
     `;
     document.body.appendChild(container);
 
-    // 5. Logic & State
+    // 6. Logic
     let isOpen = false;
-    const btn = document.getElementById('qg-btn');
-    const win = document.getElementById('qg-window');
-    const closeBtn = document.getElementById('qg-close-btn');
-    const input = document.getElementById('qg-input');
-    const sendBtn = document.getElementById('qg-send');
-    const msgs = document.getElementById('qg-msgs');
+    let hasStartedChat = false;
+
+    const ui = {
+        btn: document.getElementById('qg-btn'),
+        win: document.getElementById('qg-window'),
+        input: document.getElementById('qg-input'),
+        send: document.getElementById('qg-send'),
+        msgs: document.getElementById('qg-msgs'),
+        welcome: document.getElementById('qg-welcome'),
+        chatArea: document.getElementById('qg-chat-area'),
+        header: document.getElementById('qg-header')
+    };
 
     function toggleChat() {
         isOpen = !isOpen;
         if (isOpen) {
-            win.classList.add('open');
-            btn.innerHTML = closeIcon;
-            btn.style.transform = 'rotate(90deg)';
+            ui.win.classList.add('open');
+            ui.win.style.display = 'flex';
+            setTimeout(() => ui.win.style.opacity = '1', 10);
+            ui.btn.innerHTML = ICONS.close;
         } else {
-            win.classList.remove('open');
-            btn.innerHTML = chatIcon;
-            btn.style.transform = 'rotate(0deg)';
+            ui.win.classList.remove('open');
+            ui.win.style.opacity = '0';
+            setTimeout(() => ui.win.style.display = 'none', 500);
+            ui.btn.innerHTML = ICONS.chat;
         }
     }
+    ui.btn.onclick = toggleChat;
 
-    btn.onclick = toggleChat;
-    closeBtn.onclick = toggleChat;
-
-    // Input Handling
-    input.addEventListener('input', () => {
-        sendBtn.disabled = !input.value.trim();
+    ui.input.addEventListener('input', () => {
+        ui.send.disabled = !ui.input.value.trim();
     });
 
+    function switchToChatMode() {
+        if (hasStartedChat) return;
+        hasStartedChat = true;
+
+        // GSAP-style transition
+        ui.welcome.style.opacity = '0';
+        ui.welcome.style.transform = 'translateY(-20px)';
+
+        setTimeout(() => {
+            ui.welcome.style.display = 'none';
+            ui.header.style.display = 'flex';
+            ui.chatArea.style.display = 'flex';
+
+            // Add subtle entry for chat area
+            ui.chatArea.style.opacity = '0';
+            setTimeout(() => ui.chatArea.style.opacity = '1', 50);
+        }, 400);
+    }
+
     async function handleSend() {
-        const text = input.value.trim();
+        const text = ui.input.value.trim();
         if (!text) return;
 
-        addMessage('user', text);
-        input.value = '';
-        sendBtn.disabled = true;
+        switchToChatMode();
 
-        // Show typing indicator
-        const typingId = showTyping();
+        addMessage('user', text);
+        ui.input.value = '';
+        ui.send.disabled = true;
+
+        showTyping();
 
         try {
             const response = await fetch(backendUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ client_id: clientId, message: text, session_id: 'sess_' + Math.random().toString(36).substr(2, 9) })
+                body: JSON.stringify({ client_id: clientId, message: text, session_id: 'sess_' + Date.now() })
             });
             const data = await response.json();
-            removeTyping(typingId);
+            removeTyping();
             addMessage('bot', data.reply);
         } catch (e) {
-            removeTyping(typingId);
-            addMessage('bot', "Connecton error. Please try again.");
-            console.error(e);
+            removeTyping();
+            addMessage('bot', "Could not connect to Qgent Neural Core.");
         }
     }
 
-    sendBtn.onclick = handleSend;
-    input.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
+    ui.send.onclick = handleSend;
+    ui.input.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
 
     function addMessage(role, text) {
         const div = document.createElement('div');
         div.className = `qgent-msg ${role}`;
-
-        // Image parsing
-        const imgRegex = /\[IMAGE:\s*(.*?)\]/g;
-        let formatted = text.replace(imgRegex, (m, url) => `<img src="${url}" class="qgent-img" onerror="this.style.display='none'">`);
-
-        div.innerHTML = formatted.replace(/\n/g, '<br>');
-        msgs.appendChild(div);
-
-        // Scroll to bottom
-        setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 10);
+        div.innerHTML = text.replace(/\n/g, '<br>');
+        ui.msgs.appendChild(div);
+        setTimeout(() => ui.msgs.scrollTop = ui.msgs.scrollHeight, 10);
     }
 
+    let typingEl = null;
     function showTyping() {
-        const id = 'typing-' + Date.now();
-        const div = document.createElement('div');
-        div.className = 'qgent-msg bot';
-        div.id = id;
-        div.innerHTML = `<span style="opacity:0.6;font-size:12px">Typing...</span>`;
-        msgs.appendChild(div);
-        msgs.scrollTop = msgs.scrollHeight;
-        return id;
+        if (typingEl) return;
+        typingEl = document.createElement('div');
+        typingEl.className = 'qgent-msg bot';
+        typingEl.innerHTML = '<span style="opacity:0.7; font-size:12px">Thinking...</span>';
+        ui.msgs.appendChild(typingEl);
+        ui.msgs.scrollTop = ui.msgs.scrollHeight;
     }
 
-    function removeTyping(id) {
-        const el = document.getElementById(id);
-        if (el) el.remove();
+    function removeTyping() {
+        if (typingEl) { typingEl.remove(); typingEl = null; }
     }
 
-    // 6. Init Config (Handshake)
-    async function initWidget() {
-        try {
-            const res = await fetch(backendUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ client_id: clientId, action: 'GET_CONFIG' })
-            });
-            const config = await res.json();
-
-            // Apply Configuration
-            const primary = config.primary_color || '#0066ff';
-            document.documentElement.style.setProperty('--qg-primary', primary);
-
-            document.getElementById('qg-bot-name').innerText = config.bot_name || 'Assistant';
-            if (config.bot_avatar) {
-                document.getElementById('qg-avatar').innerHTML = `<img src="${config.bot_avatar}" style="width:100%;height:100%;border-radius:12px;object-fit:cover">`;
-            }
-
-            addMessage('bot', config.welcome_message || "Hello! How can I help you today?");
-        } catch (e) {
-            console.warn("Qgent Config Error:", e);
-            document.documentElement.style.setProperty('--qg-primary', '#0066ff');
-            addMessage('bot', "Hello! How can I help you?");
-        }
-    }
-
-    // Auto-open if parameter present (optional feature)
+    // Auto-open logic
     if (new URLSearchParams(window.location.search).has('open_chat')) {
         setTimeout(toggleChat, 1000);
     }
 
-    initWidget();
 })();

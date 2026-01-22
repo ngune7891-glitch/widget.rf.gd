@@ -1,5 +1,5 @@
 (function () {
-    // 1. Client ID Validation - V02
+    // 1. Client ID Validation
     const scriptTag = document.currentScript;
     const clientId = scriptTag.getAttribute('data-id');
     const backendUrl = 'https://gravixapp.netlify.app/api/chat';

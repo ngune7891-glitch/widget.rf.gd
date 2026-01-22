@@ -1,8 +1,8 @@
-(function () {
-    // 1. Client ID Validation
+(function() {
+    // 1. Client ID Validation 4
     const scriptTag = document.currentScript;
     const clientId = scriptTag.getAttribute('data-id');
-    const backendUrl = 'https://gravixapp.netlify.app/api/chat';
+    const backendUrl = 'https://gravixapp.netlify.app/api/chat'; 
 
     if (!clientId) return console.error("Qgent: Client ID missing!");
 
@@ -361,7 +361,7 @@
     // 6. Logic
     let isOpen = false;
     let hasStartedChat = false;
-
+    
     const ui = {
         btn: document.getElementById('qg-btn'),
         win: document.getElementById('qg-window'),
@@ -375,7 +375,7 @@
 
     function toggleChat() {
         isOpen = !isOpen;
-        if (isOpen) {
+        if(isOpen) {
             ui.win.classList.add('open');
             ui.win.style.display = 'flex';
             setTimeout(() => ui.win.style.opacity = '1', 10);
@@ -394,18 +394,18 @@
     });
 
     function switchToChatMode() {
-        if (hasStartedChat) return;
+        if(hasStartedChat) return;
         hasStartedChat = true;
-
+        
         // GSAP-style transition
         ui.welcome.style.opacity = '0';
         ui.welcome.style.transform = 'translateY(-20px)';
-
+        
         setTimeout(() => {
             ui.welcome.style.display = 'none';
             ui.header.style.display = 'flex';
             ui.chatArea.style.display = 'flex';
-
+            
             // Add subtle entry for chat area
             ui.chatArea.style.opacity = '0';
             setTimeout(() => ui.chatArea.style.opacity = '1', 50);
@@ -414,10 +414,10 @@
 
     async function handleSend() {
         const text = ui.input.value.trim();
-        if (!text) return;
+        if(!text) return;
 
         switchToChatMode();
-
+        
         addMessage('user', text);
         ui.input.value = '';
         ui.send.disabled = true;
@@ -433,14 +433,14 @@
             const data = await response.json();
             removeTyping();
             addMessage('bot', data.reply);
-        } catch (e) {
+        } catch(e) {
             removeTyping();
             addMessage('bot', "Could not connect to Qgent Neural Core.");
         }
     }
 
     ui.send.onclick = handleSend;
-    ui.input.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
+    ui.input.onkeypress = (e) => { if(e.key === 'Enter') handleSend(); };
 
     function addMessage(role, text) {
         const div = document.createElement('div');
@@ -452,7 +452,7 @@
 
     let typingEl = null;
     function showTyping() {
-        if (typingEl) return;
+        if(typingEl) return;
         typingEl = document.createElement('div');
         typingEl.className = 'qgent-msg bot';
         typingEl.innerHTML = '<span style="opacity:0.7; font-size:12px">Thinking...</span>';
@@ -461,11 +461,11 @@
     }
 
     function removeTyping() {
-        if (typingEl) { typingEl.remove(); typingEl = null; }
+        if(typingEl) { typingEl.remove(); typingEl = null; }
     }
 
     // Auto-open logic
-    if (new URLSearchParams(window.location.search).has('open_chat')) {
+    if(new URLSearchParams(window.location.search).has('open_chat')) {
         setTimeout(toggleChat, 1000);
     }
 
